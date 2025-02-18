@@ -1,0 +1,12 @@
+version: '1.0'
+
+services:
+  fastapi:
+    image: fastapi:v3
+    ports:
+      - 80:80
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=80
+      - HOST=0.0.0.0
