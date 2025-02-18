@@ -4,6 +4,6 @@ from fastapi import FastAPI
 app = FastAPI()
 
 
-@app.get('/health')
+@app.get('/')
 def hello_world():
     return {'response': 'Hello World'}
