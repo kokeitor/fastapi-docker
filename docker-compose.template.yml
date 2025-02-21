@@ -2,16 +2,21 @@ version: "3.8"
 
 services:
   webapp:
-    # opcion 1
-    # Parámetro para indicar la imagen de la aplicación FastAPI
-    # image: ${WEBAPP_IMAGE}  # Defínelo en tu archivo .env o en la variable de entorno
-    # opcion 2
+    # Opción 1: Usar imagen preconstruida definida en una variable de entorno o nombrada literalmente como : 
+    # image-name:image-tag ejemplo : my-image:v1 o my-image:latest
+    # image: ${WEBAPP_IMAGE}  # Define la imagen vía variable de entorno
+
+    # Opción 1.1: Usar imagen hosteada en Docker Hub o en Azure Container Registry (necesario autenticación):
+    # image: dockerhub_usuario/mi_webapp:latest
+    # image: miacr.azurecr.io/mi_webapp:latest
+    
+    # Opción 2: Construir la imagen a partir de un Dockerfile local
     build:
-      context: ./ruta_a_tu_codigo  # Ruta al directorio donde se encuentra tu Dockerfile
-      dockerfile: Dockerfile       # Opcional, solo si usas un nombre distinto
+      context: ./ruta_a_tu_codigo  # Ruta al directorio que contiene tu Dockerfile
+      dockerfile: Dockerfile       # Opcional, solo si el nombre es distinto
     container_name: fastapi_app
     ports:
-      - "8000:8000"  # Exponiendo el puerto 8000 del contenedor al host
+      - "8000:8000"  # host-port:container-port >> Exponer el puerto 8000 del contenedor al host
     volumes:
       # Bind mount: mapea la carpeta local ./host_data al directorio /data del contenedor
       - ./host_data:/data
@@ -24,6 +29,10 @@ services:
     depends_on:
       db:
         condition: service_healthy  # Espera a que la base de datos esté saludable antes de iniciar
+    secrets:
+      # Se inyecta el secreto 'server-certificate' en el contenedor.
+      # Este secreto se montará automáticamente en /run/secrets/server-certificate
+      - server-certificate
     deploy:
       replicas: 2
       restart_policy:
@@ -84,3 +93,9 @@ volumes:
   # Declaración de volumen externo para la base de datos
   db_data:
     external: true
+
+secrets:
+  # Definición global del secreto 'server-certificate'
+  # Se especifica el archivo desde donde se carga el secreto
+  server-certificate:
+    file: ./path/to/server-certificate.pem  # Ruta al archivo del certificado
