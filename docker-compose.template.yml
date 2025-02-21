@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  webapp:
+    # Parámetro para indicar la imagen de la aplicación FastAPI
+    image: ${WEBAPP_IMAGE}  # Defínelo en tu archivo .env o en la variable de entorno
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"  # Exponiendo el puerto 8000 del contenedor al host
+    volumes:
+      # Bind mount: mapea la carpeta local ./host_data al directorio /data del contenedor
+      - ./host_data:/data
+    environment:
+      # Variables de entorno para la configuración de la aplicación
+      - ENVIRONMENT=production
+      - DB_HOST=db
+      - DB_PORT=5432
+      - LOG_LEVEL=info
+    depends_on:
+      db:
+        condition: service_healthy  # Espera a que la base de datos esté saludable antes de iniciar
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
+      placement:
+        constraints:
+          - node.role == manager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_net
+
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    volumes:
+      # Volumen externo para persistencia de datos en PostgreSQL
+      - db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=fastapi_db
+    deploy:
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "1G"
+        reservations:
+          cpus: "0.25"
+          memory: "512M"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  # Declaración de volumen externo para la base de datos
+  db_data:
+    external: true
