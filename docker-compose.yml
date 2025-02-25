@@ -9,7 +9,7 @@ services:
     ports:
       - "80:80"  # host-port:container-port (cambia si uvicorn corre en otro puerto)
     volumes:
-      - ./data:/data
+      - ./data:app/data
     env_file:
       - .env
     depends_on:
