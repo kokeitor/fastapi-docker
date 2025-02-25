@@ -1,12 +1,49 @@
-version: '1.0'
+version: "3.8"
 
 services:
-  fastapi:
-    image: fastapi:v3
+  webapp:
+    build:
+      context: .  # Ruta al directorio que contiene tu Dockerfile
+      dockerfile: Dockerfile  # Opcional si el nombre es distinto
+    container_name: fastapi_app
     ports:
-      - 80:80
+      - "80:80"  # host-port:container-port (cambia si uvicorn corre en otro puerto)
     volumes:
-      - ./data:/app/data
+      - ./data:/data
     environment:
-      - PORT=80
-      - HOST=0.0.0.0
+      - ENVIRONMENT=test
+      - DB_USER=TEST
+      - DB_PASSWORD=1234
+      - DB_NAME=DBTEST
+      - DB_HOST=db  
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy  # Espera a que la base de datos esté lista
+    networks:
+      - app_net
+
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Volumen para persistencia
+    environment:
+      - POSTGRES_USER=TEST
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=DBTEST
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U TEST -d DBTEST"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    external: true
