@@ -10,13 +10,8 @@ services:
       - "80:80"  # host-port:container-port (cambia si uvicorn corre en otro puerto)
     volumes:
       - ./data:/data
-    environment:
-      - ENVIRONMENT=test
-      - DB_USER=TEST
-      - DB_PASSWORD=1234
-      - DB_NAME=DBTEST
-      - DB_HOST=db  
-      - DB_PORT=5432
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy  # Espera a que la base de datos esté lista

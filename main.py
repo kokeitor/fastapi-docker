@@ -29,7 +29,6 @@ print(f"DB_PORT: {DB_PORT}")
 DB_URI: str = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 
-""" 
 engine = create_engine(DB_URI)
 SessionLocal = sessionmaker(
     bind=engine, autoflush=False, autocommit=False)
@@ -46,8 +45,6 @@ class Clients(BASE):
     name = Column(String(50), nullable=False)
     timestamp = Column(DateTime, nullable=False,
                        default=datetime.datetime.now())
-
-"""
 
 
 class requestModel(BaseModel):
