@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import pathlib
 from pydantic import BaseModel
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
@@ -46,6 +46,19 @@ class Clients(BASE):
     timestamp = Column(DateTime, nullable=False,
                        default=datetime.datetime.now())
 
+    def __repr__(self):
+        return f"Clients(id={self.id}, name='{self.name}', timestamp='{self.timestamp}')"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "timestamp": self.timestamp
+        }
+
+
+BASE.metadata.create_all(engine)
+
 
 class requestModel(BaseModel):
     clientName: str
@@ -54,13 +67,27 @@ class requestModel(BaseModel):
 app = FastAPI()
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @app.post('/')
-def hello_world(request: requestModel):
+def hello_world(request: requestModel,  db: Session = Depends(get_db)):
+
+    client = Clients(name=request.clientName)
+    print(
+        f"Before insert >> Searching for name {client.name} in bbdd >> {db.query(Clients).filter(Clients.name == request.clientName).first()})")
+    db.add(client)
+    print(
+        f"After insert >> Searching for name {client.name} in bbdd >> {db.query(Clients).filter(Clients.name == request.clientName).first()})")
 
     path = pathlib.Path(__file__).parent.absolute()
     file_path = path / 'data' / 'data.txt'
-    print(file_path)
-    print(request.clientName)
+    print(f"Writing to file {file_path} >> {client.name}")
     with open(file_path, 'w') as f:
-        f.write(request.clientName)
-    return {'response': f'clientName : {request.clientName}'}
+        f.write(client.name)
+    return {'response': f'Created client >> {client}'}
